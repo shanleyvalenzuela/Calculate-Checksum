@@ -45,7 +45,7 @@ def sender():
         
         serialized_packet = pickle.dumps(packet_with_checksum)
         s.sendall(serialized_packet)
-        print(f"Sent String: {data}")
+        # print(f"Sent String: {data}") # uncomment for Example 2
         print(f"Sent Packet: {packet_with_checksum}")
         print(f"Sent Checksum: {packet_with_checksum[len(packet_with_checksum)-1]}")
 
