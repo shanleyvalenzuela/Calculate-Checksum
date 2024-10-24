@@ -27,7 +27,7 @@ def create_sender_table(sent_packet, bit_size):
 
 def verify_received_packet(received_packet, bit_size):
     total_sum, wrapped_sum, checksum = calculate_checksum(received_packet[:-1], bit_size)
-    return checksum == received_packet[-1], total_sum, wrapped_sum
+    return checksum == received_packet[-1], total_sum, wrapped_sum, checksum
 
 def receiver():
     host = "localhost"
@@ -45,13 +45,17 @@ def receiver():
             data = conn.recv(1024)
             if data:
                 received_packet = pickle.loads(data)
+                received_data = received_packet[:-1]  # Exclude the last element (checksum)
+                received_string = ''.join([chr(i) for i in received_data])
                 print(f"Received Packet: {received_packet}")
+                # print(f"Received String: {received_string}") #uncomment for Example 2
 
                 # Verify checksum
                 bit_size = 4
-                is_valid, total_sum, wrapped_sum = verify_received_packet(received_packet, bit_size)
+                total_sum, wrapped_sum, checksum = calculate_checksum(received_packet, bit_size)
                 
-                if is_valid:
+                print(f"Recalculated checksum: {checksum}")
+                if (checksum == 0):
                     print("Checksum verified, data is intact.")
                 else:
                     print("Checksum mismatch, data is corrupted.")
