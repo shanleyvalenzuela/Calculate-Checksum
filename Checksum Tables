@@ -1,0 +1,92 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# One's complement function
+def ones_complement(decimal_value, bit_size):
+    max_value = (2**bit_size) - 1
+    return max_value - decimal_value
+
+# Function to handle wrapping when there are extra bits (carry)
+def handle_wrapping(sum_value, bit_size):
+    carry = sum_value >> bit_size
+    wrapped_sum = sum_value & ((1 << bit_size) - 1)
+    wrapped_sum += carry
+    if wrapped_sum >= (1 << bit_size):
+        wrapped_sum = handle_wrapping(wrapped_sum, bit_size)
+    return wrapped_sum
+
+# Calculate checksum with one's complement and wrapping
+def calculate_checksum(data, bit_size):
+    total_sum = sum(data)
+    wrapped_sum = handle_wrapping(total_sum, bit_size)
+    checksum = ones_complement(wrapped_sum, bit_size)
+    return total_sum, wrapped_sum, checksum
+
+# Create sender table
+def create_sender_table(sent_packet, bit_size):
+    total_sum, wrapped_sum, checksum = calculate_checksum(sent_packet, bit_size)
+    received_packet = sent_packet + [checksum]
+    df = pd.DataFrame({
+        "Packet": [f"{i}" for i in range(len(sent_packet))] + ["Sum", "Wrapped Sum", "Checksum"],
+        "Values": sent_packet + [total_sum, wrapped_sum, checksum]
+    })
+    return received_packet, df
+
+# Create receiver table
+def create_receiver_table(received_packet, bit_size):
+    total_sum, wrapped_sum, checksum = calculate_checksum(received_packet, bit_size)
+    df = pd.DataFrame({
+        "Packet": [f"{i}" for i in range(len(received_packet))] + ["Sum", "Wrapped Sum", "Checksum"],
+        "Values": received_packet + [total_sum, wrapped_sum, checksum]
+    })
+    return df
+
+
+
+# Plot tables side by side with reduced space between title and table
+def plot_table(sender_df, receiver_df, title, bit_size):
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    fig.suptitle(title, fontsize=16, y=1)  
+
+    # Plot sender table on the left
+    axes[0].set_axis_off()
+    table_sender = axes[0].table(cellText=sender_df.values, colLabels=sender_df.columns, loc='center')
+    table_sender.auto_set_font_size(False)
+    table_sender.set_fontsize(10)
+    table_sender.scale(1.5, 1.5)
+    axes[0].set_title("Sender Table", fontsize=14, pad=0)  
+
+    # Plot receiver table on the right
+    axes[1].set_axis_off()
+    table_receiver = axes[1].table(cellText=receiver_df.values, colLabels=receiver_df.columns, loc='center')
+    table_receiver.auto_set_font_size(False)
+    table_receiver.set_fontsize(10)
+    table_receiver.scale(1.5, 1.5)
+    axes[1].set_title("Receiver Table", fontsize=14, pad=0)  
+
+
+    fig.text(0.5, 0.02, f"Bit Size: {bit_size}", ha='center', fontsize=12)
+
+    plt.subplots_adjust(top=0.85) 
+    plt.tight_layout(rect=[0, 0, 1, 0.95]) 
+    plt.show()
+
+
+# Main function
+def main():
+
+
+    str_input = "NSCOM3"
+    sent_packet = [ord(char) for char in str_input]
+
+
+    received_packet, sender_df = create_sender_table(sent_packet, 16)
+    receiver_df = create_receiver_table(received_packet, 16)
+
+    print("Sent Packet:", sent_packet)
+    print("Received Packet (with checksum):", received_packet)
+
+    plot_table(sender_df, receiver_df, "Sender and Receiver Tables", bit_size=4)
+
+# Run the main function
+main()
